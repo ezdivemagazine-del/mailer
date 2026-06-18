@@ -559,6 +559,11 @@
             </div>
             <div class="form-grid full">
               <div class="form-field"><label>收件人（一行一個 email）</label><textarea v-model="newSched.recipientsRaw" rows="3" placeholder="shop@abc.com&#10;info@xyz.tw"></textarea></div>
+              <div class="throttle-row">
+                發送速度：每 <input type="number" v-model.number="newSched.throttle_min" min="1" max="60" style="width:50px" />
+                分鐘寄 <input type="number" v-model.number="newSched.throttle_count" min="1" max="200" style="width:60px" /> 封
+                <span style="color:#888;font-size:12px">（Gmail 建議每分鐘不超過 20 封）</span>
+              </div>
             </div>
             <button class="submit-btn" @click="addSchedule" :disabled="schedAdding">
               <span v-if="schedAdding" class="spinner"></span>
@@ -958,7 +963,7 @@ createApp({
 
     // ── Schedules ─────────────────────────────────────
     const schedules   = ref([])
-    const newSched    = ref({ name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '' })
+    const newSched    = ref({ name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '', throttle_min: 5, throttle_count: 20 })
     const schedAdding = ref(false)
     const schedMsg    = ref('')
     const schedMsgType = ref('ok')
@@ -980,7 +985,7 @@ createApp({
         const data = await res.json()
         if (!res.ok) { schedMsgType.value = 'err'; schedMsg.value = data.detail; return }
         schedMsgType.value = 'ok'; schedMsg.value = `✓ 排程建立成功，下次執行：${data.next_run?.slice(0,10)}`
-        newSched.value = { name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '' }
+        newSched.value = { name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '', throttle_min: 5, throttle_count: 20 }
         await loadSchedules()
       } catch (e) { schedMsgType.value = 'err'; schedMsg.value = '⚠️ ' + e.message }
       finally { schedAdding.value = false }
