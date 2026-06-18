@@ -429,14 +429,14 @@
             <div class="section-label">收件人名單</div>
             <textarea class="recipients-raw" v-model="rawEmails"
               placeholder="直接貼上名單，格式不限：逗號、分號、換行都可以&#10;例：shop@abc.com, info@xyz.tw; hello@store.com"
-              @input="parsedEmails = []"></textarea>
+              @input="parseEmails()"></textarea>
             <div class="parse-bar">
               <div class="parse-count" v-if="parsedEmails.length > 0">
-                已整理 <strong>{{ parsedEmails.length }}</strong> 個有效地址
+                ✓ 已辨識 <strong>{{ parsedEmails.length }}</strong> 個收件人
                 <span class="invalid" v-if="invalidCount > 0">（跳過 {{ invalidCount }} 個無效）</span>
               </div>
+              <div class="parse-count" v-else-if="rawEmails.trim()">⚠️ 未偵測到有效 email</div>
               <div class="parse-count" v-else></div>
-              <button class="parse-btn" @click="parseEmails" :disabled="!rawEmails.trim()">整理名單</button>
             </div>
             <div class="email-chips" v-if="parsedEmails.length > 0">
               <div class="chip" v-for="(em, i) in parsedEmails" :key="i">
