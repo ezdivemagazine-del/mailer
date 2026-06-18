@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>易潛企業開發信系統</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", sans-serif;
+      background: #f5f4f0; color: #1a1a1a; min-height: 100vh;
+    }
+
+    /* ── Login ── */
+    .login-page {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    .login-card {
+      background: #fff; border-radius: 20px; padding: 48px 40px;
+      width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-logo { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .login-sub  { font-size: 12px; color: #aaa; margin-bottom: 32px; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { display: block; font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .login-field input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #d0cec8; border-radius: 10px;
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    .login-field input:focus { border-color: #1a1a2e; }
+    .login-btn {
+      width: 100%; padding: 13px; background: #1a1a2e; color: #fff; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+      margin-top: 8px; transition: opacity 0.15s; font-family: inherit;
+    }
+    .login-btn:hover { opacity: 0.85; }
+    .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .login-err { margin-top: 12px; color: #c0392b; font-size: 13px; text-align: center; }
+
+    /* ── Header ── */
+    header {
+      background: #1a1a2e; color: #fff;
+      padding: 0 28px; height: 60px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    header .logo { font-size: 17px; font-weight: 700; }
+    header .sub  { font-size: 11px; color: #8888aa; margin-top: 2px; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 7px 14px; border-radius: 7px; border: none;
+      background: transparent; color: #aab; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-tab.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .user-info { font-size: 12px; color: #8888aa; display: flex; align-items: center; gap: 10px; }
+    .logout-btn {
+      padding: 5px 12px; border-radius: 6px; border: 1px solid #444;
+      background: transparent; color: #aab; cursor: pointer; font-size: 12px; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { border-color: #aab; color: #fff; }
+
+    /* ── App shell ── */
+    .app-shell { display: flex; flex-direction: column; height: 100vh; }
+    .page-body { flex: 1; overflow: hidden; display: flex; }
+    .main-layout { display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%; overflow: hidden; }
+
+    /* ── Panels ── */
+    .panel-left {
+      display: flex; flex-direction: column; padding: 22px 26px 18px;
+      border-right: 1px solid #e0ddd6; overflow-y: auto;
+    }
+    .panel-right { display: flex; flex-direction: column; overflow-y: auto; background: #faf9f6; }
+    .scrollable { overflow-y: auto; flex: 1; }
+
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: #888; margin-bottom: 10px;
+    }
+
+    /* ── Persona ── */
+    .persona-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .persona-btn {
+      padding: 6px 12px; border: 1.5px solid #d0cec8; border-radius: 20px;
+      background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; color: #555;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .persona-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .persona-btn.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+    .persona-hint {
+      font-size: 11px; color: #aaa; margin-bottom: 14px; margin-top: -10px;
+      line-height: 1.5; padding: 0 2px;
+    }
+
+    /* ── Language ── */
+    .lang-group { display: flex; gap: 8px; margin-bottom: 18px; }
+    .lang-btn {
+      flex: 1; padding: 9px 0; border: 1.5px solid #d0cec8; border-radius: 8px;
+      background: #fff; cursor: pointer; font-size: 13px; font-weight: 500; color: #555;
+      transition: all 0.15s;
+    }
+    .lang-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .lang-btn.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+
+    /* ── Chat ── */
+    .chat-history {
+      flex: 1; overflow-y: auto; margin-bottom: 14px;
+      display: flex; flex-direction: column; gap: 10px; min-height: 80px;
+    }
+    .bubble { max-width: 88%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+    .bubble.user      { align-self: flex-end; background: #1a1a2e; color: #fff; border-bottom-right-radius: 3px; }
+    .bubble.assistant { align-self: flex-start; background: #fff; border: 1px solid #e8e6e0; color: #333; border-bottom-left-radius: 3px; }
+    .bubble.system-msg { align-self: center; background: transparent; color: #aaa; font-size: 12px; border: none; padding: 4px 0; }
+
+    .input-row { display: flex; gap: 8px; align-items: flex-end; }
+    .input-box {
+      flex: 1; border: 1.5px solid #d0cec8; border-radius: 10px;
+      padding: 11px 14px; font-size: 14px; font-family: inherit;
+      resize: none; line-height: 1.5; min-height: 46px; max-height: 130px;
+      outline: none; transition: border-color 0.15s; background: #fff;
+    }
+    .input-box:focus { border-color: #1a1a2e; }
+    .input-box::placeholder { color: #bbb; }
+    .send-btn {
+      width: 46px; height: 46px; border-radius: 10px; background: #1a1a2e;
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.15s;
+    }
+    .send-btn:hover { opacity: 0.8; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .send-btn svg { width: 19px; height: 19px; fill: #fff; }
+
+    /* ── Right sections ── */
+    .right-section { padding: 20px 24px; border-bottom: 1px solid #e8e6e0; }
+    .right-section:last-child { border-bottom: none; }
+
+    .output-placeholder {
+      padding: 50px 24px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; color: #bbb; gap: 10px; text-align: center;
+    }
+    .output-placeholder svg { width: 44px; height: 44px; opacity: 0.3; }
+    .output-placeholder p { font-size: 13px; }
+
+    .output-card { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+    .output-card .card-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 7px; }
+    .edit-subject {
+      width: 100%; font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.4;
+      border: none; border-bottom: 1.5px solid #e0ddd6; background: transparent; outline: none; padding: 3px 0; font-family: inherit;
+    }
+    .edit-subject:focus { border-bottom-color: #1a1a2e; }
+    .edit-body {
+      width: 100%; font-size: 13px; line-height: 1.9; color: #333;
+      border: none; background: transparent; outline: none; resize: vertical; font-family: inherit; padding: 3px 0;
+    }
+    .copy-row { display: flex; gap: 8px; margin-top: 6px; }
+    .copy-btn {
+      padding: 7px 14px; border-radius: 7px; border: 1.5px solid #d0cec8;
+      background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; color: #555; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .copy-btn.copied { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .reset-btn {
+      padding: 7px 14px; border-radius: 7px; border: 1.5px solid #e0ded8;
+      background: transparent; cursor: pointer; font-size: 12px; color: #999; transition: all 0.15s;
+    }
+    .reset-btn:hover { color: #c0392b; border-color: #c0392b; }
+
+    /* ── Recipients ── */
+    .recipients-raw {
+      width: 100%; border: 1.5px solid #d0cec8; border-radius: 10px;
+      padding: 11px 13px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 75px;
+      outline: none; transition: border-color 0.15s; background: #fff; color: #333; line-height: 1.6;
+    }
+    .recipients-raw:focus { border-color: #1a1a2e; }
+    .recipients-raw::placeholder { color: #bbb; }
+    .parse-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 9px; gap: 8px; }
+    .parse-count { font-size: 12px; color: #666; }
+    .parse-count strong { color: #1a1a2e; }
+    .parse-count .invalid { color: #c0392b; font-size: 11px; margin-left: 6px; }
+    .parse-btn {
+      padding: 6px 14px; border-radius: 7px; background: #1a1a2e; border: none; color: #fff;
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .parse-btn:hover { opacity: 0.8; }
+    .parse-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .email-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; max-height: 100px; overflow-y: auto; }
+    .chip {
+      display: flex; align-items: center; gap: 4px;
+      background: #eef0ff; color: #3344bb; border-radius: 20px; padding: 3px 9px; font-size: 11px;
+    }
+    .chip button { background: none; border: none; cursor: pointer; color: #3344bb; font-size: 13px; line-height: 1; padding: 0; opacity: 0.5; }
+    .chip button:hover { opacity: 1; }
+
+    /* ── Send ── */
+    .mode-group { display: flex; gap: 8px; margin-bottom: 12px; }
+    .mode-btn {
+      flex: 1; padding: 9px 0; border: 1.5px solid #d0cec8; border-radius: 9px;
+      background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; color: #555;
+      transition: all 0.15s; text-align: center; font-family: inherit;
+    }
+    .mode-btn .mode-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+    .mode-btn .mode-desc  { font-size: 10px; color: #999; }
+    .mode-btn:hover { border-color: #1a1a2e; }
+    .mode-btn.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+    .mode-btn.active .mode-desc { color: #aab; }
+
+    .throttle-row { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #555; margin-bottom: 12px; flex-wrap: wrap; }
+    .throttle-row input[type=number] {
+      width: 56px; padding: 6px 8px; border: 1.5px solid #d0cec8; border-radius: 7px;
+      font-size: 13px; font-family: inherit; text-align: center; outline: none;
+    }
+    .throttle-row input[type=number]:focus { border-color: #1a1a2e; }
+
+    .smtp-select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #d0cec8; border-radius: 9px;
+      font-size: 13px; font-family: inherit; outline: none; background: #fff; color: #333; margin-bottom: 12px; cursor: pointer;
+    }
+    .smtp-select:focus { border-color: #1a1a2e; }
+    .smtp-empty { font-size: 12px; color: #e07000; background: #fff8ee; border: 1px solid #fdd; border-radius: 7px; padding: 9px 12px; margin-bottom: 12px; }
+    .smtp-empty a { color: #1a1a2e; font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+    .send-main-btn {
+      width: 100%; padding: 12px; background: #1a6b3c; color: #fff; border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .send-main-btn:hover { opacity: 0.85; }
+    .send-main-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .send-note { margin-top: 8px; font-size: 11px; color: #999; text-align: center; line-height: 1.6; }
+
+    /* ── Inner pages ── */
+    .inner-page { padding: 28px 32px; max-width: 700px; }
+    .inner-page h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+    .inner-page .desc { font-size: 12px; color: #888; margin-bottom: 22px; }
+
+    /* Cards & Lists */
+    .card-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+    .list-card { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .list-card .card-title { font-weight: 600; font-size: 14px; }
+    .list-card .card-meta  { font-size: 11px; color: #999; margin-top: 2px; }
+    .badge-ok  { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; background: #e8f5e9; color: #2e7d32; white-space: nowrap; }
+    .badge-off { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; background: #f5f5f5; color: #999; white-space: nowrap; }
+    .btn-row { display: flex; gap: 6px; align-items: center; }
+    .btn-sm {
+      padding: 5px 11px; border-radius: 7px; border: 1px solid #e0ded8;
+      background: transparent; cursor: pointer; font-size: 11px; color: #777; transition: all 0.15s;
+    }
+    .btn-sm:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .btn-sm.danger:hover { border-color: #c0392b; color: #c0392b; }
+    .btn-sm.active-btn { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
+    /* Forms */
+    .panel-form { background: #fff; border: 1.5px solid #e0ddd6; border-radius: 12px; padding: 20px; margin-bottom: 22px; }
+    .panel-form h3 { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: #1a1a2e; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field label { font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.5px; text-transform: uppercase; }
+    .form-field input, .form-field select, .form-field textarea {
+      padding: 8px 11px; border: 1.5px solid #d0cec8; border-radius: 7px;
+      font-size: 13px; font-family: inherit; outline: none; background: #fff;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: #1a1a2e; }
+    .form-field textarea { resize: vertical; min-height: 60px; }
+    .form-msg { margin-top: 10px; padding: 9px 13px; border-radius: 7px; font-size: 12px; }
+    .form-msg.ok  { background: #e8f5e9; color: #2e7d32; }
+    .form-msg.err { background: #fdecea; color: #c0392b; }
+    .preset-btns { display: flex; gap: 6px; margin-bottom: 12px; }
+    .preset-btn {
+      padding: 6px 12px; border-radius: 7px; border: 1.5px solid #d0cec8;
+      background: #fff; cursor: pointer; font-size: 11px; font-weight: 500; color: #555; transition: all 0.15s;
+    }
+    .preset-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .submit-btn {
+      width: 100%; margin-top: 12px; padding: 10px; border-radius: 9px;
+      background: #1a1a2e; border: none; color: #fff; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .submit-btn:hover { opacity: 0.8; }
+    .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Jobs */
+    .progress-bar-wrap { background: #f0efeb; border-radius: 4px; height: 5px; overflow: hidden; margin: 8px 0; }
+    .progress-bar-fill { height: 100%; background: #1a6b3c; border-radius: 4px; transition: width 0.5s; }
+    .job-stats { display: flex; gap: 14px; font-size: 11px; color: #888; }
+    .job-stats strong { color: #1a1a2e; }
+    .status-badge { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .status-badge.pending   { background: #fff8e1; color: #f57c00; }
+    .status-badge.running   { background: #e3f2fd; color: #1565c0; }
+    .status-badge.completed { background: #e8f5e9; color: #2e7d32; }
+    .status-badge.failed    { background: #fdecea; color: #c0392b; }
+    .status-badge.cancelled { background: #f5f5f5; color: #777; }
+    .no-items { color: #bbb; font-size: 13px; text-align: center; padding: 32px 0; }
+    .refresh-btn { padding: 7px 16px; border-radius: 7px; border: 1.5px solid #d0cec8; background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; color: #555; transition: all 0.15s; margin-bottom: 16px; }
+    .refresh-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+
+    /* Role tag */
+    .role-tag { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .role-tag.admin  { background: #e8eaf6; color: #3949ab; }
+    .role-tag.member { background: #f5f5f5; color: #777; }
+
+    /* Spinner */
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ 登入頁 ══ -->
+  <div v-if="!authToken" class="login-page">
+    <div class="login-card">
+      <div class="login-logo">易潛企業開發信系統</div>
+      <div class="login-sub">易潛企業 · DRT SHOW · gogoscuba · DIWA · EZDIVE</div>
+      <div class="login-field">
+        <label>帳號</label>
+        <input v-model="loginForm.username" @keydown.enter="doLogin" placeholder="輸入帳號" autocomplete="username" />
+      </div>
+      <div class="login-field">
+        <label>密碼</label>
+        <input v-model="loginForm.password" @keydown.enter="doLogin" type="password" placeholder="輸入密碼" autocomplete="current-password" />
+      </div>
+      <button class="login-btn" @click="doLogin" :disabled="loginLoading">
+        <span v-if="loginLoading" class="spinner"></span>
+        <span v-else>登入</span>
+      </button>
+      <div v-if="loginErr" class="login-err">{{ loginErr }}</div>
+    </div>
+  </div>
+
+  <!-- ══ 主介面 ══ -->
+  <div v-else class="app-shell">
+    <header>
+      <div>
+        <div class="logo">易潛企業開發信系統</div>
+        <div class="sub">易潛企業 · DRT SHOW · gogoscuba · DIWA · EZDIVE · Cressi · Seac · Alpha Oceano</div>
+      </div>
+      <div class="nav-tabs">
+        <button class="nav-tab" :class="{ active: tab === 'compose' }"  @click="tab = 'compose'">✍️ 寫信</button>
+        <button class="nav-tab" :class="{ active: tab === 'jobs' }"     @click="tab = 'jobs'; loadJobs()">📬 發送記錄</button>
+        <button class="nav-tab" :class="{ active: tab === 'schedules' }" @click="tab = 'schedules'; loadSchedules()">🗓 排程</button>
+        <button class="nav-tab" :class="{ active: tab === 'settings' }" @click="tab = 'settings'; loadSmtp()">⚙️ 信箱</button>
+        <button v-if="currentUser.role === 'admin'" class="nav-tab" :class="{ active: tab === 'admin' }" @click="tab = 'admin'; loadUsers()">👤 帳號管理</button>
+      </div>
+      <div class="user-info">
+        {{ currentUser.username }}
+        <span class="role-tag" :class="currentUser.role">{{ currentUser.role === 'admin' ? '管理員' : '成員' }}</span>
+        <button class="logout-btn" @click="logout">登出</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- ══ 寫信 ══ -->
+      <div v-if="tab === 'compose'" class="main-layout">
+        <div class="panel-left">
+          <div class="section-label">發信單位</div>
+          <div class="persona-group">
+            <button v-for="p in personas" :key="p.key"
+              class="persona-btn" :class="{ active: persona === p.key }"
+              @click="selectPersona(p.key)" :title="p.display">
+              {{ p.key }}
+            </button>
+          </div>
+
+          <div class="persona-hint" v-if="personaHint">{{ personaHint }}</div>
+
+          <div class="section-label">輸出語言</div>
+          <div class="lang-group">
+            <button v-for="l in languages" :key="l.code"
+              class="lang-btn" :class="{ active: language === l.code }" @click="language = l.code">{{ l.label }}</button>
+          </div>
+          <div class="section-label">對話記錄</div>
+          <div class="chat-history" ref="chatEl">
+            <div v-if="messages.length === 0" class="bubble system-msg">在下方輸入指令，開始產生開發信 ↓</div>
+            <div v-for="(m, i) in messages" :key="i" class="bubble" :class="m.role === 'user' ? 'user' : 'assistant'">
+              {{ m.role === 'assistant' ? '✓ 已更新信件' : m.content }}
+            </div>
+          </div>
+          <div class="input-row">
+            <textarea class="input-box" v-model="input"
+              :placeholder="messages.length === 0
+                ? '例：寫一封開發信給潛水店，介紹 Cressi 品牌，強調義大利製造品質...'
+                : '例：再正式一點、結尾加 LINE 聯絡方式...'"
+              @keydown.enter.exact.prevent="sendAI" @input="autoResize" rows="2"></textarea>
+            <button class="send-btn" @click="sendAI" :disabled="aiLoading || !input.trim()">
+              <span v-if="aiLoading" class="spinner"></span>
+              <svg v-else viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-right">
+          <!-- 信件預覽 -->
+          <div class="right-section">
+            <div class="section-label">信件預覽</div>
+            <div v-if="!result" class="output-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <p>左側輸入指令，信件產出後在這裡顯示與編輯</p>
+            </div>
+            <template v-else>
+              <div class="output-card">
+                <div class="card-label">主旨</div>
+                <input class="edit-subject" v-model="result.subject" placeholder="主旨" />
+              </div>
+              <div class="output-card">
+                <div class="card-label">內文</div>
+                <textarea class="edit-body" v-model="result.body" rows="10" placeholder="內文"></textarea>
+              </div>
+              <div class="copy-row">
+                <button class="copy-btn" :class="{ copied: copied }" @click="copyAll">{{ copied ? '已複製 ✓' : '複製全文' }}</button>
+                <button class="reset-btn" @click="resetCompose">重新開始</button>
+              </div>
+            </template>
+          </div>
+
+          <!-- 收件人 -->
+          <div class="right-section">
+            <div class="section-label">收件人名單</div>
+            <textarea class="recipients-raw" v-model="rawEmails"
+              placeholder="直接貼上名單，格式不限：逗號、分號、換行都可以&#10;例：shop@abc.com, info@xyz.tw; hello@store.com"
+              @input="parsedEmails = []"></textarea>
+            <div class="parse-bar">
+              <div class="parse-count" v-if="parsedEmails.length > 0">
+                已整理 <strong>{{ parsedEmails.length }}</strong> 個有效地址
+                <span class="invalid" v-if="invalidCount > 0">（跳過 {{ invalidCount }} 個無效）</span>
+              </div>
+              <div class="parse-count" v-else></div>
+              <button class="parse-btn" @click="parseEmails" :disabled="!rawEmails.trim()">整理名單</button>
+            </div>
+            <div class="email-chips" v-if="parsedEmails.length > 0">
+              <div class="chip" v-for="(em, i) in parsedEmails" :key="i">
+                {{ em }} <button @click="parsedEmails.splice(i, 1)">×</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 發送設定 -->
+          <div class="right-section">
+            <div class="section-label">寄件信箱</div>
+            <div v-if="smtpList.length === 0" class="smtp-empty">
+              尚未設定寄件信箱。<a @click="tab = 'settings'; loadSmtp()">前往設定 →</a>
+            </div>
+            <select v-else class="smtp-select" v-model="selectedSmtpId">
+              <option v-for="s in smtpList" :key="s.id" :value="s.id">{{ s.label }} ({{ s.username }})</option>
+            </select>
+
+            <div class="section-label">發送方式</div>
+            <div class="mode-group">
+              <button class="mode-btn" :class="{ active: sendMode === 'individual' }" @click="sendMode = 'individual'">
+                <div class="mode-title">每人一封</div><div class="mode-desc">各自收到獨立信件</div>
+              </button>
+              <button class="mode-btn" :class="{ active: sendMode === 'bcc' }" @click="sendMode = 'bcc'">
+                <div class="mode-title">密件副本 BCC</div><div class="mode-desc">一次寄出全數密件</div>
+              </button>
+            </div>
+
+            <div class="section-label">發送節奏</div>
+            <div class="throttle-row">
+              每 <input type="number" v-model.number="throttleMinutes" min="1" max="60" />
+              分鐘寄 <input type="number" v-model.number="throttleCount" min="1" max="500" /> 封
+            </div>
+
+            <button class="send-main-btn"
+              :disabled="!result || parsedEmails.length === 0 || !selectedSmtpId || sending"
+              @click="submitSend">
+              <span v-if="sending" class="spinner"></span>
+              <span v-else>{{ parsedEmails.length > 0 && selectedSmtpId ? `確認發送 — 共 ${parsedEmails.length} 位收件人` : parsedEmails.length === 0 ? '請先整理收件人名單' : '請選擇寄件信箱' }}</span>
+            </button>
+            <div class="send-note" v-if="sendResult">{{ sendResult }}</div>
+            <div class="send-note" v-else>按下後立即在背景開始發送，關閉瀏覽器不影響寄信。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 發送記錄 ══ -->
+      <div v-if="tab === 'jobs'" class="scrollable">
+        <div class="inner-page">
+          <h2>發送記錄</h2>
+          <p class="desc">每個任務的發送狀態與進度。</p>
+          <button class="refresh-btn" @click="loadJobs">重新整理</button>
+          <div v-if="jobs.length === 0" class="no-items">目前沒有發送記錄</div>
+          <div class="card-list">
+            <div class="list-card" v-for="j in jobs" :key="j.id" style="flex-direction:column; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div class="card-title">{{ j.subject }}</div>
+                  <div class="card-meta">{{ j.send_mode === 'individual' ? '每人一封' : 'BCC' }} · {{ j.created_at }}</div>
+                </div>
+                <div class="btn-row">
+                  <span class="status-badge" :class="j.status">{{ statusLabel(j.status) }}</span>
+                  <button class="btn-sm" v-if="j.status === 'running'" @click="cancelJob(j.id)">取消</button>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" :style="{ width: j.total > 0 ? ((j.sent + j.failed) / j.total * 100) + '%' : '0%' }"></div>
+              </div>
+              <div class="job-stats">
+                <span>總計 <strong>{{ j.total }}</strong></span>
+                <span>已寄 <strong>{{ j.sent }}</strong></span>
+                <span v-if="j.failed > 0" style="color:#c0392b">失敗 <strong>{{ j.failed }}</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 排程 ══ -->
+      <div v-if="tab === 'schedules'" class="scrollable">
+        <div class="inner-page">
+          <h2>自動排程</h2>
+          <p class="desc">設定後系統每隔指定天數自動觸發一輪發送，完全不需要手動操作。</p>
+
+          <div class="card-list" v-if="schedules.length > 0">
+            <div class="list-card" v-for="s in schedules" :key="s.id">
+              <div>
+                <div class="card-title">{{ s.name }}</div>
+                <div class="card-meta">每 {{ s.interval_days }} 天 · 下次執行：{{ s.next_run?.slice(0,10) }}</div>
+              </div>
+              <div class="btn-row">
+                <span :class="s.active ? 'badge-ok' : 'badge-off'">{{ s.active ? '啟用中' : '已停用' }}</span>
+                <button class="btn-sm" @click="toggleSchedule(s.id)">{{ s.active ? '停用' : '啟用' }}</button>
+                <button class="btn-sm danger" @click="deleteSchedule(s.id)">刪除</button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="no-items" style="margin-bottom:20px">目前沒有排程</div>
+
+          <div class="panel-form">
+            <h3>新增排程</h3>
+            <div class="form-grid">
+              <div class="form-field"><label>排程名稱</label><input v-model="newSched.name" placeholder="例：Cressi 雙週開發信" /></div>
+              <div class="form-field">
+                <label>寄件信箱</label>
+                <select v-model="newSched.smtp_id">
+                  <option v-for="s in smtpList" :key="s.id" :value="s.id">{{ s.label }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label>間隔天數</label><input type="number" v-model.number="newSched.interval_days" min="1" placeholder="14" /></div>
+              <div class="form-field"><label>首次執行日期</label><input type="date" v-model="newSched.start_date" /></div>
+            </div>
+            <div class="form-grid full">
+              <div class="form-field"><label>信件主旨</label><input v-model="newSched.subject" placeholder="主旨" /></div>
+            </div>
+            <div class="form-grid full">
+              <div class="form-field"><label>信件內文</label><textarea v-model="newSched.body" rows="4" placeholder="內文（可先在寫信頁產生後貼入）"></textarea></div>
+            </div>
+            <div class="form-grid full">
+              <div class="form-field"><label>收件人（一行一個 email）</label><textarea v-model="newSched.recipientsRaw" rows="3" placeholder="shop@abc.com&#10;info@xyz.tw"></textarea></div>
+            </div>
+            <button class="submit-btn" @click="addSchedule" :disabled="schedAdding">
+              <span v-if="schedAdding" class="spinner"></span>
+              <span v-else>建立排程</span>
+            </button>
+            <div v-if="schedMsg" class="form-msg" :class="schedMsgType">{{ schedMsg }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 信箱設定 ══ -->
+      <div v-if="tab === 'settings'" class="scrollable">
+        <div class="inner-page">
+          <h2>寄件信箱管理</h2>
+          <p class="desc">新增後系統自動測試連線，確認可寄信才儲存。僅管理員可新增或刪除。</p>
+          <div class="card-list" v-if="smtpList.length > 0">
+            <div class="list-card" v-for="s in smtpList" :key="s.id">
+              <div>
+                <div class="card-title">{{ s.label }}</div>
+                <div class="card-meta">
+                  {{ s.username }}
+                  <span v-if="s.channel_type === 'directmail'" style="color:#e07000"> · DirectMail</span>
+                  <span v-else> · {{ s.host }}:{{ s.port }}</span>
+                </div>
+              </div>
+              <div class="btn-row">
+                <span class="badge-ok">✓ 已驗證</span>
+                <button class="btn-sm danger" v-if="currentUser.role === 'admin'" @click="deleteSmtp(s.id)">刪除</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-form" v-if="currentUser.role === 'admin'">
+            <h3>新增寄件渠道</h3>
+            <div class="section-label" style="margin-bottom:7px">快速套用</div>
+            <div class="preset-btns">
+              <button class="preset-btn" @click="applyPreset('gmail')">Gmail</button>
+              <button class="preset-btn" @click="applyPreset('alimail')">阿里企業信箱</button>
+              <button class="preset-btn" @click="applyPreset('directmail')">阿里雲 DirectMail</button>
+            </div>
+
+            <div class="form-grid full" style="margin-bottom:10px;">
+              <div class="form-field">
+                <label>渠道類型</label>
+                <select v-model="newSmtp.channel_type">
+                  <option value="smtp">SMTP（Gmail / 企業信箱）</option>
+                  <option value="directmail">阿里雲 DirectMail（批量推薦）</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field"><label>名稱（自取）</label><input v-model="newSmtp.label" placeholder="例：批量發信渠道" /></div>
+              <div class="form-field">
+                <label>{{ newSmtp.channel_type === 'directmail' ? 'AccessKey ID' : '帳號 Email' }}</label>
+                <input v-model="newSmtp.username" :placeholder="newSmtp.channel_type === 'directmail' ? 'LTAI5t...' : 'you@example.com'" />
+              </div>
+            </div>
+
+            <template v-if="newSmtp.channel_type === 'directmail'">
+              <div class="form-grid full">
+                <div class="form-field">
+                  <label>發信地址（已在 DirectMail 後台驗證的寄件地址）</label>
+                  <input v-model="newSmtp.host" placeholder="例：no-reply@mail.yourdomain.com" />
+                </div>
+              </div>
+              <div class="form-grid full">
+                <div class="form-field">
+                  <label>AccessKey Secret</label>
+                  <input type="password" v-model="newSmtp.password" placeholder="AccessKey Secret" />
+                </div>
+              </div>
+              <div style="font-size:12px; color:#888; background:#f8f7f4; border-radius:8px; padding:10px 12px; margin-bottom:2px; line-height:1.7;">
+                📋 DirectMail 設定步驟：<br>
+                1. 登入阿里雲控制台 → DirectMail（郵件推送）<br>
+                2. 驗證寄件域名（DNS 設定，需 IT 協助）<br>
+                3. 建立發信地址（例如 no-reply@mail.yourdomain.com）<br>
+                4. RAM 建立子帳號，賦予 DirectMail 發信權限，取得 AccessKey
+              </div>
+            </template>
+            <template v-else>
+              <div class="form-grid">
+                <div class="form-field"><label>SMTP 主機</label><input v-model="newSmtp.host" placeholder="smtp.gmail.com" /></div>
+                <div class="form-field"><label>埠號</label><input type="number" v-model.number="newSmtp.port" placeholder="465" /></div>
+              </div>
+              <div class="form-grid full">
+                <div class="form-field"><label>密碼 / 應用程式密碼</label><input type="password" v-model="newSmtp.password" placeholder="Gmail 請用應用程式密碼，非登入密碼" /></div>
+              </div>
+            </template>
+
+            <button class="submit-btn" @click="addSmtp" :disabled="smtpAdding">
+              <span v-if="smtpAdding" class="spinner"></span>
+              <span v-else>測試連線並新增</span>
+            </button>
+            <div v-if="smtpMsg" class="form-msg" :class="smtpMsgType">{{ smtpMsg }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 帳號管理 ══ -->
+      <div v-if="tab === 'admin'" class="scrollable">
+        <div class="inner-page">
+          <h2>帳號管理</h2>
+          <p class="desc">管理員可新增帳號、停用離職員工、重設密碼。停用優於刪除，保留歷史紀錄。</p>
+          <div class="card-list">
+            <div class="list-card" v-for="u in users" :key="u.id">
+              <div>
+                <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+                  {{ u.username }}
+                  <span class="role-tag" :class="u.role">{{ u.role === 'admin' ? '管理員' : '成員' }}</span>
+                </div>
+                <div class="card-meta">建立：{{ u.created_at }}</div>
+              </div>
+              <div class="btn-row">
+                <span :class="u.active ? 'badge-ok' : 'badge-off'">{{ u.active ? '啟用' : '已停用' }}</span>
+                <button class="btn-sm" @click="toggleUser(u.id)" :disabled="u.username === 'admin'">
+                  {{ u.active ? '停用' : '啟用' }}
+                </button>
+                <button class="btn-sm" @click="startReset(u)">重設密碼</button>
+                <button class="btn-sm" v-if="u.role === 'member'" @click="openSmtpGrant(u)">信箱權限</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 信箱授權面板 -->
+          <div class="panel-form" v-if="smtpGrantTarget">
+            <h3>設定信箱授權 — {{ smtpGrantTarget.username }}</h3>
+            <p style="font-size:12px; color:#888; margin-bottom:14px;">勾選此帳號可以使用的寄件信箱</p>
+            <div v-if="smtpGrantList.length === 0" style="font-size:13px; color:#bbb; padding: 8px 0;">目前沒有已驗證的信箱</div>
+            <div v-for="s in smtpGrantList" :key="s.id"
+              style="display:flex; align-items:center; gap:10px; padding: 9px 0; border-bottom: 1px solid #f0eeea;">
+              <input type="checkbox" :checked="s.granted" @change="toggleSmtpGrant(smtpGrantTarget.id, s.id, s.granted)"
+                style="width:16px; height:16px; cursor:pointer;" />
+              <div>
+                <div style="font-size:13px; font-weight:600;">{{ s.label }}</div>
+                <div style="font-size:11px; color:#999;">{{ s.username }}</div>
+              </div>
+            </div>
+            <button class="submit-btn" style="margin-top:14px; background:#555;" @click="smtpGrantTarget = null">關閉</button>
+          </div>
+
+          <!-- 重設密碼表單 -->
+          <div class="panel-form" v-if="resetTarget">
+            <h3>重設密碼 — {{ resetTarget.username }}</h3>
+            <div class="form-grid full">
+              <div class="form-field"><label>新密碼</label><input type="password" v-model="resetPwd" placeholder="至少 6 個字元" /></div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button class="submit-btn" style="flex:1" @click="doReset" :disabled="!resetPwd || resetPwd.length < 6">確認重設</button>
+              <button class="submit-btn" style="flex:1; background:#888;" @click="resetTarget = null; resetPwd = ''">取消</button>
+            </div>
+            <div v-if="resetMsg" class="form-msg" :class="resetMsgType">{{ resetMsg }}</div>
+          </div>
+
+          <!-- 新增帳號 -->
+          <div class="panel-form">
+            <h3>新增帳號</h3>
+            <div class="form-grid">
+              <div class="form-field"><label>帳號名稱</label><input v-model="newUser.username" placeholder="小寫英文或數字" /></div>
+              <div class="form-field"><label>初始密碼</label><input type="password" v-model="newUser.password" placeholder="至少 6 個字元" /></div>
+            </div>
+            <div class="form-grid full">
+              <div class="form-field">
+                <label>角色</label>
+                <select v-model="newUser.role">
+                  <option value="member">成員（一般使用者）</option>
+                  <option value="admin">管理員（可管理信箱與帳號）</option>
+                </select>
+              </div>
+            </div>
+            <button class="submit-btn" @click="addUser" :disabled="userAdding">
+              <span v-if="userAdding" class="spinner"></span>
+              <span v-else>建立帳號</span>
+            </button>
+            <div v-if="userMsg" class="form-msg" :class="userMsgType">{{ userMsg }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, nextTick } = Vue
+
+createApp({
+  setup() {
+    // ── Auth ──────────────────────────────────────────
+    const authToken   = ref(localStorage.getItem('token') || '')
+    const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'))
+    const loginForm   = ref({ username: '', password: '' })
+    const loginLoading = ref(false)
+    const loginErr    = ref('')
+
+    function authHeaders() {
+      return { 'Authorization': 'Bearer ' + authToken.value, 'Content-Type': 'application/json' }
+    }
+
+    async function doLogin() {
+      loginErr.value = ''; loginLoading.value = true
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(loginForm.value),
+        })
+        const data = await res.json()
+        if (!res.ok) { loginErr.value = data.detail || '登入失敗'; return }
+        authToken.value = data.token
+        currentUser.value = { username: data.username, role: data.role }
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(currentUser.value))
+        loadSmtp()
+      } catch (e) { loginErr.value = '網路錯誤' }
+      finally { loginLoading.value = false }
+    }
+
+    function logout() {
+      authToken.value = ''; currentUser.value = {}
+      localStorage.removeItem('token'); localStorage.removeItem('user')
+    }
+
+    const tab = ref('compose')
+
+    // ── AI ────────────────────────────────────────────
+    const languages = [
+      { code: 'zh-TW', label: '繁體中文' },
+      { code: 'zh-CN', label: '简体中文' },
+      { code: 'en',    label: 'English' },
+    ]
+    const language  = ref('zh-TW')
+
+    const personas     = ref([])
+    const persona      = ref('創意種籽')
+    const personaHint  = ref('')
+
+    const PERSONA_HINTS = {
+      '創意種籽': '以品牌總代理的角色，協助潛水店建立通路合作關係',
+      'DRT SHOW': '以產業顧問的角度，協助品牌進入亞洲潛水市場',
+      'EZDIVE':   '以內容顧問的角度，協助品牌建立市場認知與專業形象',
+      'DIWA':     '以教育發展夥伴的角色，協助教練與潛店建立教育生態',
+      'GOGOSCUBA':'以通路解決方案的角度，協助品牌與市場找到最佳配對',
+    }
+
+    async function loadPersonas() {
+      try {
+        const res = await fetch('/api/personas', { headers: authHeaders() })
+        personas.value = await res.json()
+      } catch {}
+    }
+
+    function selectPersona(key) {
+      persona.value = key
+      personaHint.value = PERSONA_HINTS[key] || ''
+      // 切換部門時清空對話，避免混用不同人設的上下文
+      messages.value = []
+      result.value = null
+      input.value = ''
+    }
+    const input     = ref('')
+    const messages  = ref([])
+    const result    = ref(null)
+    const aiLoading = ref(false)
+    const copied    = ref(false)
+    const chatEl    = ref(null)
+
+    async function sendAI() {
+      const text = input.value.trim(); if (!text || aiLoading.value) return
+      messages.value.push({ role: 'user', content: text })
+      input.value = ''; aiLoading.value = true
+      await nextTick(); scrollChat()
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ messages: messages.value, language: language.value, persona: persona.value }),
+        })
+        if (res.status === 401) { logout(); return }
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.detail || '發生錯誤')
+        result.value = data
+        messages.value.push({ role: 'assistant', content: data.raw })
+      } catch (e) { messages.value.push({ role: 'assistant', content: '⚠️ ' + e.message }) }
+      finally { aiLoading.value = false; await nextTick(); scrollChat() }
+    }
+    function scrollChat() { if (chatEl.value) chatEl.value.scrollTop = chatEl.value.scrollHeight }
+    function autoResize(e) { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }
+    async function copyAll() {
+      if (!result.value) return
+      await navigator.clipboard.writeText(`主旨：${result.value.subject}\n\n${result.value.body}`)
+      copied.value = true; setTimeout(() => copied.value = false, 2000)
+    }
+    function resetCompose() { messages.value = []; result.value = null; input.value = '' }
+
+    // ── Recipients ────────────────────────────────────
+    const rawEmails    = ref('')
+    const parsedEmails = ref([])
+    const invalidCount = ref(0)
+    function parseEmails() {
+      const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g
+      const found = new Set(); let invalid = 0
+      for (const token of rawEmails.value.split(/[\s,;，；\n\r\t]+/)) {
+        const t = token.trim(); if (!t) continue
+        const m = t.match(EMAIL_RE)
+        if (m) m.forEach(e => found.add(e.toLowerCase()))
+        else if (t.length > 0) invalid++
+      }
+      parsedEmails.value = [...found]; invalidCount.value = invalid
+    }
+
+    // ── SMTP ──────────────────────────────────────────
+    const smtpList    = ref([])
+    const selectedSmtpId = ref(null)
+    const newSmtp     = ref({ label: '', host: '', port: 465, username: '', password: '', channel_type: 'smtp' })
+    const smtpAdding  = ref(false)
+    const smtpMsg     = ref('')
+    const smtpMsgType = ref('ok')
+
+    async function loadSmtp() {
+      if (!authToken.value) return
+      const res = await fetch('/api/smtp', { headers: authHeaders() })
+      smtpList.value = await res.json()
+      if (smtpList.value.length > 0 && !selectedSmtpId.value)
+        selectedSmtpId.value = smtpList.value[0].id
+    }
+    function applyPreset(type) {
+      if (type === 'gmail') {
+        newSmtp.value.channel_type = 'smtp'
+        newSmtp.value.host = 'smtp.gmail.com'
+        newSmtp.value.port = 465
+      } else if (type === 'alimail') {
+        newSmtp.value.channel_type = 'smtp'
+        newSmtp.value.host = 'smtp.qiye.aliyun.com'
+        newSmtp.value.port = 465
+      } else if (type === 'directmail') {
+        newSmtp.value.channel_type = 'directmail'
+        newSmtp.value.host = ''
+        newSmtp.value.port = 0
+      }
+    }
+    async function addSmtp() {
+      smtpMsg.value = ''; smtpAdding.value = true
+      try {
+        const res = await fetch('/api/smtp', { method: 'POST', headers: authHeaders(), body: JSON.stringify(newSmtp.value) })
+        const data = await res.json()
+        if (!res.ok) { smtpMsgType.value = 'err'; smtpMsg.value = data.detail; return }
+        smtpMsgType.value = 'ok'; smtpMsg.value = '✓ 信箱已新增，連線測試通過！'
+        newSmtp.value = { label: '', host: '', port: 465, username: '', password: '', channel_type: 'smtp' }
+        await loadSmtp()
+      } catch (e) { smtpMsgType.value = 'err'; smtpMsg.value = '⚠️ ' + e.message }
+      finally { smtpAdding.value = false }
+    }
+    async function deleteSmtp(id) {
+      if (!confirm('確定要刪除這個信箱嗎？')) return
+      await fetch(`/api/smtp/${id}`, { method: 'DELETE', headers: authHeaders() })
+      await loadSmtp()
+    }
+
+    // ── Send ──────────────────────────────────────────
+    const sendMode       = ref('individual')
+    const throttleMinutes = ref(5)
+    const throttleCount  = ref(50)
+    const sending        = ref(false)
+    const sendResult     = ref('')
+
+    async function submitSend() {
+      if (!result.value || parsedEmails.value.length === 0 || !selectedSmtpId.value) return
+      sending.value = true; sendResult.value = ''
+      try {
+        const res = await fetch('/api/jobs', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({
+            subject: result.value.subject, body: result.value.body,
+            recipients: parsedEmails.value, send_mode: sendMode.value,
+            smtp_id: selectedSmtpId.value, throttle_min: throttleMinutes.value, throttle_count: throttleCount.value,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.detail || '發生錯誤')
+        sendResult.value = `✓ ${data.message}。可至「發送記錄」查看進度。`
+      } catch (e) { sendResult.value = '⚠️ ' + e.message }
+      finally { sending.value = false }
+    }
+
+    // ── Jobs ──────────────────────────────────────────
+    const jobs = ref([])
+    async function loadJobs() {
+      const res = await fetch('/api/jobs', { headers: authHeaders() })
+      jobs.value = await res.json()
+    }
+    async function cancelJob(id) {
+      await fetch(`/api/jobs/${id}/cancel`, { method: 'POST', headers: authHeaders() })
+      await loadJobs()
+    }
+    function statusLabel(s) {
+      return { pending: '等待中', running: '發送中', completed: '完成', failed: '失敗', cancelled: '已取消' }[s] || s
+    }
+
+    // ── Schedules ─────────────────────────────────────
+    const schedules   = ref([])
+    const newSched    = ref({ name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '' })
+    const schedAdding = ref(false)
+    const schedMsg    = ref('')
+    const schedMsgType = ref('ok')
+
+    async function loadSchedules() {
+      const res = await fetch('/api/schedules', { headers: authHeaders() })
+      schedules.value = await res.json()
+    }
+    async function addSchedule() {
+      schedMsg.value = ''; schedAdding.value = true
+      const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g
+      const recipients = [...new Set((newSched.value.recipientsRaw.match(EMAIL_RE) || []).map(e => e.toLowerCase()))]
+      if (recipients.length === 0) { schedMsgType.value = 'err'; schedMsg.value = '請至少填入一個收件人'; schedAdding.value = false; return }
+      try {
+        const res = await fetch('/api/schedules', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ ...newSched.value, recipients }),
+        })
+        const data = await res.json()
+        if (!res.ok) { schedMsgType.value = 'err'; schedMsg.value = data.detail; return }
+        schedMsgType.value = 'ok'; schedMsg.value = `✓ 排程建立成功，下次執行：${data.next_run?.slice(0,10)}`
+        newSched.value = { name: '', smtp_id: null, interval_days: 14, start_date: '', subject: '', body: '', recipientsRaw: '' }
+        await loadSchedules()
+      } catch (e) { schedMsgType.value = 'err'; schedMsg.value = '⚠️ ' + e.message }
+      finally { schedAdding.value = false }
+    }
+    async function toggleSchedule(id) {
+      await fetch(`/api/schedules/${id}/toggle`, { method: 'POST', headers: authHeaders() })
+      await loadSchedules()
+    }
+    async function deleteSchedule(id) {
+      if (!confirm('確定要刪除此排程嗎？')) return
+      await fetch(`/api/schedules/${id}`, { method: 'DELETE', headers: authHeaders() })
+      await loadSchedules()
+    }
+
+    // ── Users ─────────────────────────────────────────
+    const users       = ref([])
+    const newUser     = ref({ username: '', password: '', role: 'member' })
+    const userAdding  = ref(false)
+    const userMsg     = ref('')
+    const userMsgType = ref('ok')
+    const resetTarget = ref(null)
+    const resetPwd    = ref('')
+    const resetMsg    = ref('')
+    const resetMsgType = ref('ok')
+
+    // ── 信箱授權 ──────────────────────────────────────
+    const smtpGrantTarget = ref(null)
+    const smtpGrantList   = ref([])
+
+    async function openSmtpGrant(u) {
+      smtpGrantTarget.value = u
+      const res = await fetch(`/api/users/${u.id}/smtp`, { headers: authHeaders() })
+      smtpGrantList.value = await res.json()
+    }
+    async function toggleSmtpGrant(userId, smtpId, currentlyGranted) {
+      const method = currentlyGranted ? 'DELETE' : 'POST'
+      await fetch(`/api/users/${userId}/smtp/${smtpId}`, { method, headers: authHeaders() })
+      await openSmtpGrant(smtpGrantTarget.value)
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/users', { headers: authHeaders() })
+      users.value = await res.json()
+    }
+    async function addUser() {
+      userMsg.value = ''; userAdding.value = true
+      try {
+        const res = await fetch('/api/users', { method: 'POST', headers: authHeaders(), body: JSON.stringify(newUser.value) })
+        const data = await res.json()
+        if (!res.ok) { userMsgType.value = 'err'; userMsg.value = data.detail; return }
+        userMsgType.value = 'ok'; userMsg.value = `✓ ${data.message}`
+        newUser.value = { username: '', password: '', role: 'member' }
+        await loadUsers()
+      } catch (e) { userMsgType.value = 'err'; userMsg.value = '⚠️ ' + e.message }
+      finally { userAdding.value = false }
+    }
+    async function toggleUser(id) {
+      await fetch(`/api/users/${id}/toggle`, { method: 'POST', headers: authHeaders() })
+      await loadUsers()
+    }
+    function startReset(u) { resetTarget.value = u; resetPwd.value = ''; resetMsg.value = '' }
+    async function doReset() {
+      resetMsg.value = ''
+      try {
+        const res = await fetch(`/api/users/${resetTarget.value.id}/reset-password`, {
+          method: 'POST', headers: authHeaders(), body: JSON.stringify({ new_password: resetPwd.value })
+        })
+        const data = await res.json()
+        if (!res.ok) { resetMsgType.value = 'err'; resetMsg.value = data.detail; return }
+        resetMsgType.value = 'ok'; resetMsg.value = '✓ 密碼已重設'
+        resetTarget.value = null; resetPwd.value = ''
+      } catch (e) { resetMsgType.value = 'err'; resetMsg.value = '⚠️ ' + e.message }
+    }
+
+    if (authToken.value) { loadSmtp(); loadPersonas() }
+    personaHint.value = PERSONA_HINTS['創意種籽']
+
+    return {
+      authToken, currentUser, loginForm, loginLoading, loginErr, tab,
+      languages, language, input, messages, result, aiLoading, copied, chatEl,
+      rawEmails, parsedEmails, invalidCount,
+      smtpList, selectedSmtpId, newSmtp, smtpAdding, smtpMsg, smtpMsgType,
+      sendMode, throttleMinutes, throttleCount, sending, sendResult,
+      jobs, schedules, newSched, schedAdding, schedMsg, schedMsgType,
+      users, newUser, userAdding, userMsg, userMsgType,
+      resetTarget, resetPwd, resetMsg, resetMsgType,
+      personas, persona, personaHint, selectPersona,
+      smtpGrantTarget, smtpGrantList, openSmtpGrant, toggleSmtpGrant,
+      doLogin, logout, sendAI, autoResize, copyAll, resetCompose, parseEmails,
+      loadSmtp, applyPreset, addSmtp, deleteSmtp, submitSend,
+      loadJobs, cancelJob, statusLabel,
+      loadSchedules, addSchedule, toggleSchedule, deleteSchedule,
+      loadUsers, addUser, toggleUser, startReset, doReset,
+    }
+  }
+}).mount('#app')
+</script>
+</body>
+</html>

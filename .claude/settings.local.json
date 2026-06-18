@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(open /Volumes/AI/業務信件開發軟體/)",
+      "Bash(PYTHONPATH=. python3 -m uvicorn app.backend.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s -X POST http://localhost:8000/api/generate -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"寫一封開發信給潛水店，介紹 Cressi 品牌\"}],\"language\":\"zh-TW\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('主旨:', d['subject'][:50]\\); print\\('內文前50字:', d['body'][:50]\\)\")",
+      "Bash(pkill -f \"uvicorn app.backend\")",
+      "Bash(python3 -m uvicorn app.backend.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(curl -s http://localhost:8000/api/smtp)",
+      "Bash(curl -s http://localhost:8000/api/jobs)",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"admin1234\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('登入成功, role:', d.get\\('role','?'\\)\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(docker build *)",
+      "Bash(which docker *)",
+      "Bash(python3 -c \"from alibabacloud_dm20151123.client import Client; print\\('OK'\\)\")",
+      "Bash(ssh-keyscan -H 192.168.3.200 >> ~/.ssh/known_hosts 2>/dev/null; echo \"done\")",
+      "Bash(ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N \"\")",
+      "Bash(curl -s --connect-timeout 8 http://192.168.3.200:8000/health)",
+      "Bash(gh --version)",
+      "Bash(git --version)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
