@@ -771,7 +771,7 @@ createApp({
         currentUser.value = { username: data.username, role: data.role }
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(currentUser.value))
-        loadSmtp()
+        loadSmtp(); loadPersonas()
       } catch (e) { loginErr.value = '網路錯誤' }
       finally { loginLoading.value = false }
     }
