@@ -30,7 +30,10 @@
       "Bash(git push *)",
       "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/frontend/index.html\" admin@192.168.3.200:/share/homes/admin/mailer/app/frontend/)",
       "Bash(ssh admin@192.168.3.200 'export PATH=/share/CACHEDEV2_DATA/.qpkg/container-station/bin:$PATH && cd /share/homes/admin/mailer && docker build -t ezdive/mailer:latest . && docker compose up -d')",
-      "Bash(git commit -m 'fix: 部門按鈕登入後不顯示 + 新增 CHANGELOG *)"
+      "Bash(git commit -m 'fix: 部門按鈕登入後不顯示 + 新增 CHANGELOG *)",
+      "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/frontend/index.html\" \"/Volumes/AI/業務信件開發軟體/app/backend/main.py\" admin@192.168.3.200:/share/homes/admin/mailer/app/frontend/)",
+      "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/backend/main.py\" admin@192.168.3.200:/share/homes/admin/mailer/app/backend/)",
+      "Bash(git commit -m 'fix: 語言切換不生效 *)"
     ]
   }
 }

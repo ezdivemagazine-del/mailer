@@ -79,9 +79,9 @@ GOGOSCUBA 的業務並非單純只有銷售商品，而是協助潛水員、教�
 }
 
 LANGUAGE_MAP = {
-    "zh-TW": "請用繁體中文（台灣商務語氣）撰寫",
-    "zh-CN": "請用簡體中文（面向中國大陸通路的商務語氣）撰寫",
-    "en":    "Please write in English (professional B2B tone)",
+    "zh-TW": "【重要】必須用繁體中文（台灣商務語氣）撰寫全文，包含主旨與內文。",
+    "zh-CN": "【重要】必須用簡體中文（面向中國大陸通路的商務語氣）撰寫全文，包含主旨與內文。",
+    "en":    "【IMPORTANT】You MUST write the entire email in English only, including subject and body. Do not use any Chinese characters.",
 }
 
 

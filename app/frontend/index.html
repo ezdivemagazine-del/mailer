@@ -376,7 +376,7 @@
           <div class="section-label">輸出語言</div>
           <div class="lang-group">
             <button v-for="l in languages" :key="l.code"
-              class="lang-btn" :class="{ active: language === l.code }" @click="language = l.code">{{ l.label }}</button>
+              class="lang-btn" :class="{ active: language === l.code }" @click="language = l.code; messages = []; result = { subject: '', body: '', raw: '' }">{{ l.label }}</button>
           </div>
           <div class="section-label">對話記錄</div>
           <div class="chat-history" ref="chatEl">
