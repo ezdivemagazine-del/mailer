@@ -36,7 +36,8 @@
       "Bash(git commit -m 'fix: 語言切換不生效 *)",
       "Bash(git commit -m 'fix: 排程新增節流設定欄位 *)",
       "Bash(git commit *)",
-      "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/frontend/index.html\" \"/Volumes/AI/業務信件開發軟體/app/backend/main.py\" \"/Volumes/AI/業務信件開發軟體/app/backend/mailer.py\" \"/Volumes/AI/業務信件開發軟體/app/backend/database.py\" admin@192.168.3.200:/share/homes/admin/mailer/app/backend/)"
+      "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/frontend/index.html\" \"/Volumes/AI/業務信件開發軟體/app/backend/main.py\" \"/Volumes/AI/業務信件開發軟體/app/backend/mailer.py\" \"/Volumes/AI/業務信件開發軟體/app/backend/database.py\" admin@192.168.3.200:/share/homes/admin/mailer/app/backend/)",
+      "Bash(scp \"/Volumes/AI/業務信件開發軟體/app/backend/mailer.py\" admin@192.168.3.200:/share/homes/admin/mailer/app/backend/)"
     ]
   }
 }

@@ -59,7 +59,8 @@ def send_bcc(host: str, port: int, username: str, password: str,
         msg = MIMEMultipart("alternative")
         msg["Subject"] = str(Header(subject, "utf-8"))
         msg["From"] = from_addr
-        msg["To"] = from_addr
+        msg["To"] = "undisclosed-recipients:;"
+        msg["Bcc"] = ", ".join(recipients)
         msg.attach(MIMEText(body, "plain", "utf-8"))
 
         if port == 465:
