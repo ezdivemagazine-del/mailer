@@ -137,6 +137,7 @@ class SendJobCreate(BaseModel):
     smtp_id: int
     throttle_min: int = 5
     throttle_count: int = 50
+    bcc_batch_size: int = 50
 
 class ScheduleCreate(BaseModel):
     name: str
@@ -315,10 +316,10 @@ def create_job(req: SendJobCreate, user=Security(get_current_user)):
         conn.close(); raise HTTPException(status_code=400, detail="找不到已驗證的寄件信箱")
     cur = conn.execute(
         """INSERT INTO send_jobs
-           (subject, body, send_mode, smtp_id, throttle_min, throttle_count, total, status, created_by)
-           VALUES (?,?,?,?,?,?,?,'pending',?)""",
+           (subject, body, send_mode, smtp_id, throttle_min, throttle_count, bcc_batch_size, total, status, created_by)
+           VALUES (?,?,?,?,?,?,?,?,'pending',?)""",
         (req.subject, req.body, req.send_mode, req.smtp_id,
-         req.throttle_min, req.throttle_count, len(req.recipients), user["sub"])
+         req.throttle_min, req.throttle_count, req.bcc_batch_size, len(req.recipients), user["sub"])
     )
     job_id = cur.lastrowid
     conn.executemany(

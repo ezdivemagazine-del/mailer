@@ -466,9 +466,13 @@
             </div>
 
             <div class="section-label">發送節奏</div>
-            <div class="throttle-row">
+            <div class="throttle-row" v-if="sendMode === 'individual'">
               每 <input type="number" v-model.number="throttleMinutes" min="1" max="60" />
               分鐘寄 <input type="number" v-model.number="throttleCount" min="1" max="500" /> 封
+            </div>
+            <div class="throttle-row" v-if="sendMode === 'bcc'">
+              每批 <input type="number" v-model.number="bccBatchSize" min="1" max="500" /> 位收件人／封，
+              每批間隔 <input type="number" v-model.number="throttleMinutes" min="1" max="60" /> 分鐘
             </div>
 
             <button class="send-main-btn"
@@ -931,6 +935,7 @@ createApp({
     const sendMode       = ref('individual')
     const throttleMinutes = ref(5)
     const throttleCount  = ref(50)
+    const bccBatchSize   = ref(50)
     const sending        = ref(false)
     const sendResult     = ref('')
 
@@ -943,7 +948,7 @@ createApp({
           body: JSON.stringify({
             subject: result.value.subject, body: result.value.body,
             recipients: parsedEmails.value, send_mode: sendMode.value,
-            smtp_id: selectedSmtpId.value, throttle_min: throttleMinutes.value, throttle_count: throttleCount.value,
+            smtp_id: selectedSmtpId.value, throttle_min: throttleMinutes.value, throttle_count: throttleCount.value, bcc_batch_size: bccBatchSize.value,
           }),
         })
         const data = await res.json()
@@ -1074,7 +1079,7 @@ createApp({
       languages, language, input, messages, result, aiLoading, copied, chatEl,
       rawEmails, parsedEmails, invalidCount,
       smtpList, selectedSmtpId, newSmtp, smtpAdding, smtpMsg, smtpMsgType,
-      sendMode, throttleMinutes, throttleCount, sending, sendResult,
+      sendMode, throttleMinutes, throttleCount, bccBatchSize, sending, sendResult,
       jobs, schedules, newSched, schedAdding, schedMsg, schedMsgType,
       users, newUser, userAdding, userMsg, userMsgType,
       resetTarget, resetPwd, resetMsg, resetMsgType,

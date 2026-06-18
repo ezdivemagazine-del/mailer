@@ -86,6 +86,12 @@ def init_db():
     """)
     conn.commit()
 
+    # migration：舊資料庫補欄位
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(send_jobs)").fetchall()}
+    if "bcc_batch_size" not in cols:
+        conn.execute("ALTER TABLE send_jobs ADD COLUMN bcc_batch_size INTEGER DEFAULT 50")
+        conn.commit()
+
     # 建立預設 admin 帳號（若不存在或密碼欄位為空）
     from .auth import hash_password, verify_password
     existing = conn.execute("SELECT id, password FROM users WHERE username='admin'").fetchone()

@@ -109,19 +109,29 @@ def run_job(job_id: int):
     body           = job["body"]
 
     if send_mode == "bcc":
+        bcc_batch_size = job["bcc_batch_size"] or 50
         emails = [r["email"] for r in pending]
-        ok, err = send_bcc(host, port, username, password, username, emails, subject, body)
-        status = "sent" if ok else "failed"
-        for r in pending:
+        for batch_start in range(0, len(emails), bcc_batch_size):
+            batch_emails = emails[batch_start:batch_start + bcc_batch_size]
+            batch_rows   = pending[batch_start:batch_start + bcc_batch_size]
+            current = conn.execute("SELECT status FROM send_jobs WHERE id=?", (job_id,)).fetchone()
+            if current and current["status"] == "cancelled":
+                conn.close(); return
+            ok, err = send_bcc(host, port, username, password, username, batch_emails, subject, body)
+            status = "sent" if ok else "failed"
+            for r in batch_rows:
+                conn.execute(
+                    "UPDATE send_recipients SET status=?, error=?, sent_at=? WHERE id=?",
+                    (status, err if not ok else None, _now(), r["id"])
+                )
+            delta = 1 if ok else 0
             conn.execute(
-                "UPDATE send_recipients SET status=?, error=?, sent_at=? WHERE id=?",
-                (status, err if not ok else None, _now(), r["id"])
+                "UPDATE send_jobs SET sent=sent+?, failed=failed+?, updated_at=? WHERE id=?",
+                (delta * len(batch_emails), (1 - delta) * len(batch_emails), _now(), job_id)
             )
-        delta = 1 if ok else 0
-        conn.execute(
-            "UPDATE send_jobs SET sent=sent+?, failed=failed+?, updated_at=? WHERE id=?",
-            (delta * len(emails), (1 - delta) * len(emails), _now(), job_id)
-        )
+            conn.commit()
+            if batch_start + bcc_batch_size < len(emails):
+                time.sleep(throttle_min * 60)
     else:
         batch = []
         for i, r in enumerate(pending):
