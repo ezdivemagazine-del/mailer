@@ -1,14 +1,35 @@
 import sqlite3
 import os
+import threading
+from contextlib import contextmanager
 
 DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "../../data/mailer.db"))
+
+# Application-level write lock — prevents concurrent SQLite write conflicts
+# regardless of filesystem/WAL support on the NAS volume.
+_WRITE_LOCK = threading.Lock()
 
 
 def get_conn():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+@contextmanager
+def write_conn():
+    """Acquire the write lock, yield a connection, commit and close on exit."""
+    with _WRITE_LOCK:
+        conn = get_conn()
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
 
 def init_db():
@@ -43,6 +64,7 @@ def init_db():
             smtp_id        INTEGER REFERENCES smtp_accounts(id),
             throttle_min   INTEGER DEFAULT 5,
             throttle_count INTEGER DEFAULT 50,
+            bcc_batch_size INTEGER DEFAULT 50,
             status         TEXT DEFAULT 'pending',
             total          INTEGER DEFAULT 0,
             sent           INTEGER DEFAULT 0,
@@ -77,23 +99,49 @@ def init_db():
             smtp_id        INTEGER REFERENCES smtp_accounts(id),
             throttle_min   INTEGER DEFAULT 5,
             throttle_count INTEGER DEFAULT 50,
-            interval_days  INTEGER NOT NULL,
-            next_run       TEXT NOT NULL,
+            bcc_batch_size INTEGER DEFAULT 50,
+            interval_days  INTEGER NOT NULL DEFAULT 0,
+            next_run       TEXT,
+            scheduled_at   TEXT,
+            status         TEXT DEFAULT 'pending',
             active         INTEGER DEFAULT 1,
             created_by     INTEGER REFERENCES users(id),
             created_at     TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS signatures (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER REFERENCES users(id),
+            name       TEXT NOT NULL,
+            content    TEXT NOT NULL DEFAULT '',
+            is_default INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
     """)
     conn.commit()
 
-    # migration：舊資料庫補欄位
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(send_jobs)").fetchall()}
-    if "bcc_batch_size" not in cols:
+    # migrations
+    cols_jobs = {r[1] for r in conn.execute("PRAGMA table_info(send_jobs)").fetchall()}
+    if "bcc_batch_size" not in cols_jobs:
         conn.execute("ALTER TABLE send_jobs ADD COLUMN bcc_batch_size INTEGER DEFAULT 50")
         conn.commit()
 
-    # 建立預設 admin 帳號（若不存在或密碼欄位為空）
-    from .auth import hash_password, verify_password
+    cols_sched = {r[1] for r in conn.execute("PRAGMA table_info(schedules)").fetchall()}
+    for col, defn in [
+        ("scheduled_at",   "TEXT"),
+        ("status",         "TEXT DEFAULT 'pending'"),
+        ("bcc_batch_size", "INTEGER DEFAULT 50"),
+    ]:
+        if col not in cols_sched:
+            conn.execute(f"ALTER TABLE schedules ADD COLUMN {col} {defn}")
+            conn.commit()
+
+    # Fix rows where scheduled_at was mistakenly set to the string 'NULL'
+    conn.execute("UPDATE schedules SET scheduled_at=NULL WHERE scheduled_at='NULL'")
+    conn.commit()
+
+    # 建立預設 admin 帳號
+    from .auth import hash_password
     existing = conn.execute("SELECT id, password FROM users WHERE username='admin'").fetchone()
     if not existing:
         conn.execute(

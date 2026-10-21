@@ -2,6 +2,9 @@
 
 > 這份文件是給 Claude 看的。不管是哪個帳號、哪次對話，讀完這份文件就能立刻接手這個專案。
 
+> ⚠️ **開工前先讀 [AGENTS.md](AGENTS.md)** —— 那是所有 AI 共用的工作規範（鐵則、標準流程、上版方式）。
+> 本文件（CLAUDE.md）負責「專案是什麼、技術細節、存取設定」；AGENTS.md 負責「做事的規矩」。
+
 ---
 
 ## 專案是什麼
@@ -81,22 +84,78 @@
 
 ---
 
-## 上版流程（每次改完程式碼後）
+## 本地啟動（改完程式先在自己電腦測）
 
 ```bash
-# 1. 在 Mac 傳修改的檔案到 NAS
-scp "修改的檔案路徑" admin@192.168.3.200:/share/homes/admin/mailer/對應路徑/
+cd "/Volumes/AI/業務信件開發軟體"
+pip3 install -r app/backend/requirements.txt   # 第一次才需要
+PYTHONPATH=. python3 -m uvicorn app.backend.main:app --host 0.0.0.0 --port 8000
+```
+
+開瀏覽器到 http://localhost:8000 測試。測完按 Ctrl+C 停止（或 `pkill -f "uvicorn app.backend"`）。
+
+---
+
+## 上版流程（每次改完程式碼後）
+
+**首選：一行搞定。**
+
+```bash
+./deploy.sh "這次改了什麼"
+```
+
+`deploy.sh` 會自動：送程式到 NAS → 重建容器 → `git commit` + `push`。
+（換 NAS／路徑時，改 `deploy.sh` 最上面的「設定」區塊即可。）
+
+<details>
+<summary>手動步驟（deploy.sh 壞掉時的備援）</summary>
+
+```bash
+# 1. 傳修改的檔案到 NAS
+scp -r app Dockerfile docker-compose.yml admin@192.168.3.200:/share/homes/admin/mailer/
 
 # 2. 在 NAS 重新建置並啟動（約 15-30 秒）
-export PATH=/share/CACHEDEV2_DATA/.qpkg/container-station/bin:$PATH
-cd /share/homes/admin/mailer
-docker build -t ezdive/mailer:latest . && docker compose up -d
-
-# 或從 Mac 用 SSH 直接執行（已設定免密碼 SSH key）：
 ssh admin@192.168.3.200 "export PATH=/share/CACHEDEV2_DATA/.qpkg/container-station/bin:\$PATH && cd /share/homes/admin/mailer && docker build -t ezdive/mailer:latest . && docker compose up -d"
+
+# 3. 推到 GitHub
+git add -A && git commit -m "說明改了什麼" && git push
 ```
 
 > requirements.txt 沒變的話，pip install 用快取，build 只需 15 秒。
+</details>
+
+---
+
+## 新電腦接手（業務換電腦 / 新同事第一次設定）
+
+新電腦只有「資料夾」還不夠，要先打通兩個存取權，`deploy.sh` 才能自動上版。
+**這三樣東西要向 Tony（或前手）拿**：NAS admin 密碼、OpenAI 金鑰、GitHub 帳號存取權。
+
+### 1. 連得到 NAS（免密碼 SSH）
+```bash
+# 若沒有 SSH key 先產生一把（一路按 Enter）
+ls ~/.ssh/id_ed25519.pub || ssh-keygen -t ed25519
+
+# 把公鑰裝到 NAS（會問一次 NAS 的 admin 密碼，之後就免密碼）
+ssh-copy-id admin@192.168.3.200
+
+# 測試：應該不再問密碼
+ssh admin@192.168.3.200 "echo ok"
+```
+
+### 2. 推得上 GitHub
+```bash
+# 安裝 GitHub CLI 後登入（跟著畫面用瀏覽器授權一次）
+gh auth login
+```
+Repo：https://github.com/ezdivemagazine-del/mailer （private，帳號 `ezdivemagazine-del`）
+
+### 3. 金鑰在哪
+- `OPENAI_API_KEY`、`SECRET_KEY` 都在專案根目錄的 **`.env`** 檔（**不在 git 裡**，所以換電腦時 `.env` 要一起帶過去，或照 `.env.example` 重填）。
+- 這個資料夾如果是直接放在 NAS 共用區，`.env` 通常已經在裡面；確認一下 `cat .env` 有值即可。
+- OpenAI 金鑰餘額／重辦：platform.openai.com（帳號資訊問 Tony）。
+
+設定完這三項，之後只要「講需求 → AI 改 → `./deploy.sh`」就會自動上線。
 
 ---
 

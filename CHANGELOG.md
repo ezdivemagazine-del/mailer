@@ -1,6 +1,24 @@
 # Changelog — 易潛企業開發信系統
 
-每次上版後記錄在這裡。未來接手的 Claude 請從最新一筆往下讀。
+每次上版都要在這裡記一筆（最新的放最上面）。接手的 AI 從最新一筆往下讀就懂現況。
+記錄格式見 [AGENTS.md](AGENTS.md) 第 3 節。
+
+---
+
+## 2026-10-21｜交接：把工作流程打包進專案
+
+### 改了什麼
+- 新增 **[AGENTS.md](AGENTS.md)**：所有 AI（Claude Code / Codex / Cursor…）共用的工作規範——鐵則、標準流程、上版方式。
+- 新增 **[deploy.sh](deploy.sh)**：一行上版（送 NAS → 重建容器 → git commit/push）。
+- 新增 **[HANDOVER.md](HANDOVER.md)**：Tony 離職前要交接的帳號 / 金鑰清單。
+- `CLAUDE.md` 加上「本地啟動」「新電腦接手」說明，並在開頭指向 AGENTS.md。
+
+### 為什麼
+- Tony（PM）約一個月後離職，專案交給業務同事用 AI 繼續維護。
+- 要讓「業務只講需求，AI 自己改 → 記錄 → 上版」成為固定流程，不依賴特定人或特定 AI。
+
+### 要注意的
+- 換電腦接手時，務必先照 CLAUDE.md「新電腦接手」打通 NAS SSH 與 GitHub 存取，`deploy.sh` 才能運作。
 
 ---
 
